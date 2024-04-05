@@ -1,7 +1,6 @@
 package com.bridgelabz.questionbank.Model;
 
 import org.bson.types.ObjectId;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
@@ -13,7 +12,7 @@ public class Topics {
 
     private ObjectId id;
 
-    private String title;
+    private String topic;
 
     List<Subtopics> subtopic=new ArrayList<>();
     List<Questions>questions;
@@ -27,12 +26,12 @@ public class Topics {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getTopic() {
+        return topic;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 
     public List<Subtopics> getSubtopic() {
@@ -59,8 +58,32 @@ public class Topics {
     public String toString() {
         return "Topics{" +
                 "id=" + id +
-                ", title='" + title + '\'' +
+                ", topic='" + topic + '\'' +
                 ", subtopic=" + subtopic +
                 '}';
+    }
+
+    public void addEasyQuestion(Questions question) {
+        if (questions == null) {
+            questions = new ArrayList<>();
+        }
+        question.setQuestionLevels(Questions.questionLevels.EASY);
+        questions.add(question);
+    }
+
+    public void addMediumQuestion(Questions question) {
+        if (questions == null) {
+            questions = new ArrayList<>();
+        }
+        question.setQuestionLevels(Questions.questionLevels.MEDIUM);
+        questions.add(question);
+    }
+
+    public void addHardQuestion(Questions question) {
+        if (questions == null) {
+            questions = new ArrayList<>();
+        }
+        question.setQuestionLevels(Questions.questionLevels.HARD);
+        questions.add(question);
     }
 }

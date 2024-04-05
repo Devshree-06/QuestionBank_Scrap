@@ -4,14 +4,42 @@ import com.bridgelabz.questionbank.Model.Questions;
 import com.bridgelabz.questionbank.Model.Subtopics;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TopicDto {
     private ObjectId id;
-    private String title;
+    private String topic;
     private List<Subtopics> subtopic;
 
-    List<Questions>questions;
+    private List<Questions>questions;
+    private String questionType; // Add this field
+    private String questionLevel;
+
+
+    public TopicDto() {
+
+    }
+
+    public TopicDto( List<Questions> questions) {
+        this.questions = questions;
+    }
+
+    public String getQuestionType() {
+        return questionType;
+    }
+
+    public void setQuestionType(String questionType) {
+        this.questionType = questionType;
+    }
+
+    public String getQuestionLevel() {
+        return questionLevel;
+    }
+
+    public void setQuestionLevel(String questionLevel) {
+        this.questionLevel = questionLevel;
+    }
 
     public ObjectId getId() {
         return id;
@@ -21,19 +49,23 @@ public class TopicDto {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getTopic() {
+        return topic;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 
     public List<Subtopics> getSubtopic() {
         return subtopic;
     }
 
+
     public List<Questions> getQuestions() {
+        if (questions == null) {
+            questions = new ArrayList<>();
+        }
         return questions;
     }
 
@@ -53,13 +85,22 @@ public class TopicDto {
             }
         }
     }
+    // Method to get the name of the subtopic
+    public String getSubtopicName() {
+        if (subtopic != null && !subtopic.isEmpty()) {
+            return subtopic.get(0).getName(); // Assuming there's only one subtopic
+        }
+        return null;
+    }
 
     @Override
     public String toString() {
         return "TopicDto{" +
                 "id='" + id + '\'' +
-                ", title='" + title + '\'' +
+                ", topic='" + topic + '\'' +
                 ", subtopics=" + subtopic +
                 '}';
     }
+
+
 }

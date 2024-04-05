@@ -11,10 +11,11 @@ import com.bridgelabz.questionbank.Repository.QuestionBankRepository;
 import com.bridgelabz.questionbank.Repository.TopicRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
 
 @Service
 public class QuestionService {
@@ -38,59 +39,96 @@ public class QuestionService {
     }
 
 
+public Flux<Questions> addQuestionWithLevel(TopicDto topicDto, Questions question) {
+    // Check if the topic exists, if not create a new topic
+    return topicRepository.findById(topicDto.getId())
+            .switchIfEmpty(createNewTopic(topicDto))
+            .flatMapMany(topic -> {
+                // Set the question level using the enum
+                question.setQuestionLevels(question.getQuestionLevels());
 
-    public Mono<Questions>addQuestionsforMain(TopicDto topicDto,Questions questions){
-        return topicRepository.findById(topicDto.getId())
+                // Find the subtopic to add the question to
+                Subtopics subtopic = findOrCreateSubtopic(topic, topicDto.getSubtopicName());
 
-                .flatMap(topics -> {
-                    topics.getQuestions().add(questions);
-                    if(topics.getQuestions()!=null && topics.getQuestions().isEmpty()){
-                        topics.getQuestions().addAll(topicDto.getQuestions());
+                // Add the question to the subtopic
+                subtopic.addQuestion(question);
 
-                    }
-                    return topicRepository.save(topics).thenReturn(questions);
 
-                });
+
+                // Save the updated topic with the new question and return the saved question
+                return topicRepository.save(topic)
+                        .thenMany(Flux.just(question));
+            });
+}
+
+    private Mono<Topics> createNewTopic(TopicDto topicDto) {
+        Topics newTopic = new Topics();
+        newTopic.setTopic(topicDto.getTopic());
+
+        // Set subtopics if available
+        if (topicDto.getSubtopic() != null) {
+            newTopic.setSubtopic(topicDto.getSubtopic());
+        }
+
+        // Set questions if available
+        if (topicDto.getQuestions() != null) {
+            newTopic.setQuestions(topicDto.getQuestions());
+        } else {
+            // Initialize questions list if null
+            newTopic.setQuestions(new ArrayList<>());
+        }
+
+        // Save the new topic
+        return topicRepository.save(newTopic);
     }
+
+    private Subtopics findOrCreateSubtopic(Topics topic, String subtopicName) {
+        // Check if the subtopic already exists
+        Subtopics subtopic = topic.getSubtopic().stream()
+                .filter(st -> st.getName().equals(subtopicName))
+                .findFirst()
+                .orElse(null);
+
+        // If the subtopic doesn't exist, create a new one
+        if (subtopic == null) {
+            subtopic = new Subtopics();
+            subtopic.setName(subtopicName);
+            topic.addSubTopic(subtopic);
+        }
+
+
+        return subtopic;
+    }
+
 
     public Mono<Topics> updateTopic(TopicDto topicDto) {
-        // Retrieve the existing topic from the database
-        Mono<Topics> existingTopicMono = questionBankRepository.findById(topicDto.getId());
+        // Directly chain the operations using flatMap
+        return questionBankRepository.findById(topicDto.getId())
+                .flatMap(existingTopic -> {
+                    // Update the fields of the existing topic with the values from the DTO
+                    if (topicDto.getTopic() != null) {
+                        existingTopic.setTopic(topicDto.getTopic());
+                    }
+                    // Update subtopic names using nested streams
+                    topicDto.getSubtopic().forEach(subtopic -> {
+                        // Check if the subtopic already exists
+                        boolean subtopicExists = existingTopic.getSubtopic().stream()
+                                .anyMatch(existingSubtopic -> existingSubtopic.getName().equals(subtopic.getName()));
 
-        // Use flatMap to handle asynchronous operations
-        return existingTopicMono.flatMap(existingTopic -> {
-            // Update the fields of the existing topic with the values from the DTO
-            if (topicDto.getTitle() != null) {
-                existingTopic.setTitle(topicDto.getTitle());
-            }
-
-            // Update subtopic names
-            if (topicDto.getSubtopic() != null) {
-                for (Subtopics subtopic : topicDto.getSubtopic()) {
-                    boolean subtopicExists = false;
-                    // Iterate through existing subtopics to find a match
-                    for (Subtopics existingSubtopic : existingTopic.getSubtopic()) {
-                        if (existingSubtopic.getName().equals(subtopic.getName())) {
-                            // If a match is found, update the existing subtopic
-                            existingSubtopic.setName(subtopic.getName());
-                            subtopicExists = true;
-                            break;
+                        // If subtopic exists, update its name; otherwise, add it to the existing topic
+                        if (subtopicExists) {
+                            existingTopic.getSubtopic().stream()
+                                    .filter(existingSubtopic -> existingSubtopic.getName().equals(subtopic.getName()))
+                                    .findFirst()
+                                    .ifPresent(existingSubtopic -> existingSubtopic.setName(subtopic.getName()));
+                        } else {
+                            existingTopic.addSubTopic(subtopic);
                         }
-                    }
-                    // If the subtopic does not exist, add it to the existing topic
-                    if (!subtopicExists) {
-                        existingTopic.addSubTopic(subtopic);
-                    }
-                }
-            }
-
-            // Save the updated topic back to the database
-            return questionBankRepository.save(existingTopic);
-        });
+                    });
+                    // Save the updated topic back to the database
+                    return questionBankRepository.save(existingTopic);
+                });
     }
-
-
-
 
 
 }
