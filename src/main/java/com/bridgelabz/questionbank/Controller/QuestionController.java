@@ -4,28 +4,19 @@ package com.bridgelabz.questionbank.Controller;
 import com.bridgelabz.questionbank.DTO.TopicDto;
 //import com.bridgelabz.questionbank.Model.Questions;
 import com.bridgelabz.questionbank.Model.Questions;
-import com.bridgelabz.questionbank.Model.Subtopics;
 import com.bridgelabz.questionbank.Model.Topics;
 import com.bridgelabz.questionbank.Service.QuestionService;
-import com.bridgelabz.questionbank.Util.Response;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpServletRequest;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -45,17 +36,6 @@ public class QuestionController {
                 .map(createdTopic -> ResponseEntity.status(HttpStatus.CREATED).body(createdTopic));
     }
 
-
-//    @RequestMapping(value = "/")
-//    public void redirect(HttpServletResponse response) throws IOException {
-//        response.sendRedirect("swagger-ui.html");
-//    }
-//@GetMapping("/")
-//public Mono<Void> redirect(ServerHttpResponse response) {
-//    response.setStatusCode(HttpStatus.SEE_OTHER);
-//    response.getHeaders().setLocation("/swagger-ui.html");
-//    return response.setComplete();
-//}
 
     @GetMapping("/alltopics")
     public Flux<ResponseEntity<Topics>> getAllTopics(){
@@ -78,13 +58,6 @@ public class QuestionController {
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-
-//    @PatchMapping("/addquestion/{id}")
-//    public Mono<ResponseEntity<TopicDto>>addQuestion(@RequestBody Questions question,@PathVariable ObjectId id){
-//        return questionService.addQuestionsforMain(topicDto,id)
-//                .map(ResponseEntity::ok);
-//
-//    }
 @PostMapping("/add-question")
 public Mono<ResponseEntity<List<Questions>>> addQuestionWithLevel(
         @RequestBody TopicDto topicDto,
@@ -113,6 +86,11 @@ public Mono<ResponseEntity<List<Questions>>> addQuestionWithLevel(
             .map(savedQuestions -> ResponseEntity.ok(savedQuestions));
 }
 
+
+    @GetMapping("/questions")
+    public Flux<Topics> getAllQuestions() {
+        return questionService.getAllQuestions();
+    }
 
 
 }

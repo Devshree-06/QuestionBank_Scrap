@@ -39,6 +39,12 @@ public class QuestionService {
     }
 
 
+    public Flux<Topics> getAllQuestions() {
+        return questionBankRepository.findAll();
+
+    }
+
+
 public Flux<Questions> addQuestionWithLevel(TopicDto topicDto, Questions question) {
     // Check if the topic exists, if not create a new topic
     return topicRepository.findById(topicDto.getId())
